@@ -1,0 +1,9 @@
+services:
+  frontend:
+    build:
+      context: .
+      args:
+        VITE_API_URL: http://178.128.197.90:8080
+    ports:
+      - "80:80"
+    restart: unless-stopped

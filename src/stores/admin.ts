@@ -7,6 +7,7 @@ import {
   deleteVotingSession,
   getAllSessions
 } from '../services/adminService'
+import { useResultsStore } from './results'
 import { useAuthStore } from './auth'
 
 interface AdminState {
@@ -74,6 +75,11 @@ export const useAdminStore = defineStore('admin', {
         const message = await activateVotingSession(sessionId, authStore.token)
         this.statusMessage = typeof message === 'string' ? message : 'Session activated'
         await this.loadSessions()
+        const resultsStore = useResultsStore()
+        resultsStore.stopPolling()
+        resultsStore.session = null
+        await resultsStore.refreshResults()
+        resultsStore.startPolling()
       } catch (error) {
         this.errorMessage = error instanceof Error ? error.message : 'Failed to activate session.'
         throw error
@@ -93,6 +99,11 @@ export const useAdminStore = defineStore('admin', {
         const message = await closeVotingSession(sessionId, authStore.token)
         this.statusMessage = typeof message === 'string' ? message : 'Session closed'
         await this.loadSessions()
+        const resultsStore = useResultsStore()
+        resultsStore.stopPolling()
+        resultsStore.session = null
+        await resultsStore.refreshResults()
+        resultsStore.startPolling()
       } catch (error) {
         this.errorMessage = error instanceof Error ? error.message : 'Failed to close session.'
         throw error

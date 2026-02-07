@@ -24,7 +24,8 @@ export const useVotingStore = defineStore('voting', {
   }),
   getters: {
     options: (state): VotingOption[] => state.session?.options ?? [],
-    sessionTitle: (state) => state.session?.title ?? 'Live Voting Session'
+    sessionTitle: (state) => state.session?.title ?? 'Live Voting Session',
+    isActive: (state) => state.session?.status === 'ACTIVE'
   },
   actions: {
     async loadSession(force = false) {
@@ -33,16 +34,23 @@ export const useVotingStore = defineStore('voting', {
       try {
         const session = await getActiveSession()
         this.session = session
+        if (session.status && session.status !== 'ACTIVE') {
+          this.errorMessage = 'No active session right now.'
+        }
       } catch (error) {
         this.errorMessage = error instanceof Error ? error.message : 'Failed to load session.'
       }
     },
     selectOption(optionId: number) {
-      if (this.hasVoted) return
+      if (this.hasVoted || !this.isActive) return
       this.selectedOptionId = optionId
     },
     async submitSelectedVote() {
       if (this.selectedOptionId === null || this.hasVoted || !this.session) return
+      if (this.session.status && this.session.status !== 'ACTIVE') {
+        this.errorMessage = 'Voting is not active.'
+        return
+      }
       this.isSubmitting = true
       this.statusMessage = null
       this.errorMessage = null
@@ -50,6 +58,9 @@ export const useVotingStore = defineStore('voting', {
         const authStore = useAuthStore()
         if (!authStore.token) {
           throw new Error('You must be logged in to vote.')
+        }
+        if (authStore.isAdmin) {
+          throw new Error('Admins cannot vote in sessions.')
         }
         await submitVote(this.session.id, this.selectedOptionId, authStore.token)
         this.hasVoted = true
@@ -64,6 +75,7 @@ export const useVotingStore = defineStore('voting', {
       this.selectedOptionId = null
       this.hasVoted = false
       this.statusMessage = null
+      this.errorMessage = null
     }
   }
 })

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { VotingOption } from '../types/voting'
+import { getOptionLabel, type VotingOption } from '../types/voting'
 
 interface Props {
   option: VotingOption
@@ -24,7 +24,7 @@ const handleSelect = () => {
     :disabled="disabled"
     @click="handleSelect"
   >
-    <div class="option-title">{{ option.text }}</div>
+    <div class="option-title">{{ getOptionLabel(option) }}</div>
   </button>
 </template>
 

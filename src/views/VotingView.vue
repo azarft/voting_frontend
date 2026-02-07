@@ -43,7 +43,7 @@ const handleSubmit = async () => {
           :key="option.id"
           :option="option"
           :selected="option.id === votingStore.selectedOptionId"
-          :disabled="votingStore.hasVoted"
+          :disabled="votingStore.hasVoted || !votingStore.isActive"
           @select="handleSelect"
         />
       </div>
@@ -54,6 +54,7 @@ const handleSubmit = async () => {
         </button>
         <p v-if="votingStore.statusMessage" class="status-message">{{ votingStore.statusMessage }}</p>
         <p v-else-if="votingStore.errorMessage" class="status-message error">{{ votingStore.errorMessage }}</p>
+        <p v-else-if="!votingStore.isActive" class="status-message">Voting is not active.</p>
       </div>
     </div>
   </section>

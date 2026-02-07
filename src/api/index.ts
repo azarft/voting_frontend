@@ -49,14 +49,14 @@ const request = async <T>(
 }
 
 export const requestAuthCode = async (email: string) => {
-  await request('/auth/request-code', {
+  await request('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email })
   })
 }
 
 export const verifyAuthCode = async (email: string, code: string) => {
-  return request<{ token: string }>('/auth/verify-code', {
+  return request<{ token: string }>('/auth/verify', {
     method: 'POST',
     body: JSON.stringify({ email, code })
   })
@@ -69,7 +69,7 @@ export const getActiveSession = async () => {
 }
 
 export const submitVote = async (sessionId: number, optionId: number, token: string) => {
-  return request('/vote', {
+  return request('/votes', {
     method: 'POST',
     body: JSON.stringify({ sessionId, optionId })
   }, token)
@@ -81,8 +81,14 @@ export const getLiveResults = async () => {
   })
 }
 
-export const getFinalResults = async (sessionId: number) => {
-  return request<Record<string, number>>(`/results/final?sessionId=${sessionId}`, {
+export const getLatestFinalResults = async () => {
+  return request<Record<string, number>>('/results/final', {
+    method: 'GET'
+  })
+}
+
+export const getFinalResultsBySessionId = async (sessionId: number) => {
+  return request<Record<string, number>>(`/results/final/${sessionId}`, {
     method: 'GET'
   })
 }

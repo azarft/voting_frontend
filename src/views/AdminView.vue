@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useAdminStore } from '../stores/admin'
+import { getOptionLabel } from '../types/voting'
 
 const adminStore = useAdminStore()
 const title = ref('')
 const optionsText = ref('')
-const activateId = ref<number | null>(null)
-
 const parsedOptions = computed(() =>
   optionsText.value
     .split('\n')
@@ -27,17 +26,18 @@ const handleCreateSession = async () => {
   optionsText.value = ''
 }
 
-const handleActivate = async () => {
-  if (!activateId.value) return
-  await adminStore.activateSession(activateId.value)
-}
-
 const handleClose = async (sessionId: number) => {
   await adminStore.closeSession(sessionId)
 }
 
 const handleDelete = async (sessionId: number) => {
   await adminStore.deleteSession(sessionId)
+}
+
+const confirmActivate = async (sessionId: number) => {
+  const confirmed = window.confirm('Are you sure you want to activate this session?')
+  if (!confirmed) return
+  await adminStore.activateSession(sessionId)
 }
 </script>
 
@@ -67,20 +67,13 @@ const handleDelete = async (sessionId: number) => {
         </div>
 
         <div class="card">
-          <h2>Activate Session</h2>
-          <label class="field">
-            <span>Session ID</span>
-            <input v-model.number="activateId" type="number" min="1" placeholder="1" />
-          </label>
-          <button class="primary-button alt" type="button" :disabled="adminStore.isLoading" @click="handleActivate">
-            {{ adminStore.isLoading ? 'Activating…' : 'Activate session' }}
-          </button>
-
+          <h2>Last Created Session</h2>
           <div v-if="adminStore.lastCreatedSession" class="info-block">
-            <p class="info-title">Last created session</p>
+            <p class="info-title">Session</p>
             <p>ID: {{ adminStore.lastCreatedSession.id }}</p>
             <p>{{ adminStore.lastCreatedSession.title }}</p>
           </div>
+          <p v-else class="empty-state">Create a session to see details here.</p>
         </div>
       </div>
 
@@ -105,7 +98,7 @@ const handleDelete = async (sessionId: number) => {
                 class="ghost-button"
                 type="button"
                 :disabled="adminStore.isLoading"
-                @click="adminStore.activateSession(session.id)"
+                @click="confirmActivate(session.id)"
               >
                 Activate
               </button>
@@ -129,7 +122,7 @@ const handleDelete = async (sessionId: number) => {
           </div>
           <div class="options">
             <span v-for="option in session.options" :key="option.id" class="chip">
-              {{ option.text }}
+              {{ getOptionLabel(option) }}
             </span>
           </div>
         </div>

@@ -42,7 +42,7 @@ export const router = createRouter({
 export const setupRouterGuards = (pinia: Pinia) => {
   router.beforeEach((to) => {
     const authStore = useAuthStore(pinia)
-    const isAdminEmail = authStore.email === 'argen.azanov@alatoo.edu.kg'
+    const isAdminEmail = authStore.isAdmin
 
     if (to.name === 'login' && authStore.isAuthenticated) {
       return { path: '/vote' }
@@ -54,6 +54,10 @@ export const setupRouterGuards = (pinia: Pinia) => {
 
     if (to.meta.requiresAdmin && !isAdminEmail) {
       return { path: '/vote' }
+    }
+
+    if (to.name === 'vote' && isAdminEmail) {
+      return { path: '/results' }
     }
 
     return true

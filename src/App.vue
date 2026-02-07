@@ -6,6 +6,8 @@ const authStore = useAuthStore()
 const router = useRouter()
 
 const handleLogout = () => {
+  const confirmed = window.confirm('Are you sure you want to logout?')
+  if (!confirmed) return
   authStore.logout()
   router.push('/login')
 }
@@ -19,13 +21,9 @@ const handleLogout = () => {
         <span>Live TV Voting</span>
       </div>
       <nav class="nav-links">
-        <RouterLink to="/vote" class="nav-link">Vote</RouterLink>
+        <RouterLink v-if="!authStore.isAdmin" to="/vote" class="nav-link">Vote</RouterLink>
         <RouterLink to="/results" class="nav-link">Results</RouterLink>
-        <RouterLink
-          v-if="authStore.email === 'argen.azanov@alatoo.edu.kg'"
-          to="/admin"
-          class="nav-link"
-        >
+        <RouterLink v-if="authStore.isAdmin" to="/admin" class="nav-link">
           Admin
         </RouterLink>
         <button v-if="authStore.isAuthenticated" class="ghost-button" type="button" @click="handleLogout">

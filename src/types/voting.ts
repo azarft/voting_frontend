@@ -1,12 +1,13 @@
 export interface VotingOption {
   id: number
-  text: string
+  name?: string
+  text?: string
 }
 
 export interface VotingSession {
   id: number
   title: string
-  status?: 'ACTIVE' | 'CLOSED'
+  status?: 'DRAFT' | 'ACTIVE' | 'CLOSED'
   options: VotingOption[]
 }
 
@@ -16,3 +17,5 @@ export interface VoteResult {
   votes: number
   percentage: number
 }
+
+export const getOptionLabel = (option: VotingOption) => option.name ?? option.text ?? ''

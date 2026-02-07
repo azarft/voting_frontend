@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import type { VoteResult, VotingSession } from '../types/voting'
-import { getLiveResults } from '../services/resultsService'
+import { getOptionLabel, type VoteResult, type VotingSession } from '../types/voting'
+import { getLatestFinalResults, getLiveResults } from '../services/resultsService'
 import { getActiveSession } from '../services/sessionService'
 
 interface ResultsState {
@@ -9,6 +9,7 @@ interface ResultsState {
   isLoading: boolean
   pollingId: ReturnType<typeof setInterval> | null
   errorMessage: string | null
+  resultsTitle: string
 }
 
 export const useResultsStore = defineStore('results', {
@@ -17,7 +18,8 @@ export const useResultsStore = defineStore('results', {
     session: null,
     isLoading: false,
     pollingId: null,
-    errorMessage: null
+    errorMessage: null,
+    resultsTitle: 'Audience Vote'
   }),
   actions: {
     async loadSession() {
@@ -26,6 +28,9 @@ export const useResultsStore = defineStore('results', {
       try {
         const session = await getActiveSession()
         this.session = session
+        if (session.status && session.status !== 'ACTIVE') {
+          this.errorMessage = 'No active session. Showing last final results.'
+        }
       } catch (error) {
         this.errorMessage = error instanceof Error ? error.message : 'Failed to load session.'
       }
@@ -37,18 +42,34 @@ export const useResultsStore = defineStore('results', {
         if (!this.session) {
           await this.loadSession()
         }
-        if (!this.session) return
-        const response = await getLiveResults()
-        const totalVotes = Object.values(response).reduce((sum, value) => sum + value, 0)
-        this.results = this.session.options.map((option) => {
-          const votes = response[option.text] ?? 0
-          return {
-            optionId: option.id,
-            label: option.text,
+        if (this.session && this.session.status === 'ACTIVE') {
+          const response = await getLiveResults()
+          const totalVotes = Object.values(response).reduce((sum, value) => sum + value, 0)
+          const responseKeys = Object.keys(response)
+          this.resultsTitle = this.session.title
+          this.results = this.session.options.map((option) => {
+            const label = getOptionLabel(option)
+            const fallbackLabel = !label && responseKeys.length ? responseKeys[this.session?.options.indexOf(option) ?? 0] : ''
+            const resolvedLabel = label || fallbackLabel || `Option ${option.id}`
+            const votes = response[resolvedLabel] ?? 0
+            return {
+              optionId: option.id,
+              label: resolvedLabel,
+              votes,
+              percentage: totalVotes === 0 ? 0 : Math.round((votes / totalVotes) * 100)
+            }
+          })
+        } else {
+          const response = await getLatestFinalResults()
+          const totalVotes = Object.values(response).reduce((sum, value) => sum + value, 0)
+          this.resultsTitle = 'Latest Final Results'
+          this.results = Object.entries(response).map(([label, votes], index) => ({
+            optionId: index + 1,
+            label,
             votes,
             percentage: totalVotes === 0 ? 0 : Math.round((votes / totalVotes) * 100)
-          }
-        })
+          }))
+        }
       } catch (error) {
         this.errorMessage = error instanceof Error ? error.message : 'Failed to load results.'
       } finally {

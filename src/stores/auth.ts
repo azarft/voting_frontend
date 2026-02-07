@@ -4,6 +4,11 @@ import { requestAuthCode, verifyAuthCode } from '../services/authService'
 const TOKEN_KEY = 'tv_voting_token'
 const EMAIL_KEY = 'tv_voting_email'
 
+const ADMIN_EMAILS = [
+  'argen.azanov@alatoo.edu.kg',
+  'niyazhan.shabdanaliev@alatoo.edu.kg'
+]
+
 interface AuthState {
   token: string | null
   email: string | null
@@ -17,7 +22,8 @@ export const useAuthStore = defineStore('auth', {
     isLoading: false
   }),
   getters: {
-    isAuthenticated: (state) => Boolean(state.token)
+    isAuthenticated: (state) => Boolean(state.token),
+    isAdmin: (state) => (state.email ? ADMIN_EMAILS.includes(state.email) : false)
   },
   actions: {
     async requestCode(email: string) {

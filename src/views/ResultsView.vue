@@ -18,8 +18,10 @@ onUnmounted(() => {
     <div class="panel">
       <header class="header">
         <p class="eyebrow">Live Results</p>
-        <h1>{{ resultsStore.session?.title ?? 'Audience Vote' }}</h1>
-        <p class="subtitle">Updated every few seconds.</p>
+        <h1>{{ resultsStore.resultsTitle }}</h1>
+        <p class="subtitle">
+          {{ resultsStore.session?.status === 'ACTIVE' ? 'Updated every few seconds.' : 'Latest closed session.' }}
+        </p>
       </header>
 
       <div class="results">

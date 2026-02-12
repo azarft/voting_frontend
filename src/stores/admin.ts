@@ -52,6 +52,9 @@ export const useAdminStore = defineStore('admin', {
           throw new Error('You must be logged in as admin.')
         }
         const session = await createVotingSession(title, options, authStore.token)
+        if (!session) {
+          throw new Error('Session was not created.')
+        }
         this.lastCreatedSession = session
         this.statusMessage = `Session ${session.id} created`
         await this.loadSessions()

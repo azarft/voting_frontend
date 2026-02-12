@@ -25,6 +25,9 @@ export const useAuthStore = defineStore('auth', {
       this.isLoading = true
       try {
         const response = await loginAdmin(email, password)
+        if (!response?.token) {
+          throw new Error('Invalid login response.')
+        }
         this.token = response.token
         this.email = email
         localStorage.setItem(TOKEN_KEY, response.token)

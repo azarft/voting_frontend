@@ -15,7 +15,7 @@ const request = async <T>(
   path: string,
   options: RequestInit = {},
   token?: string | null
-): Promise<T> => {
+): Promise<T | null> => {
   const headers = new Headers(options.headers)
   headers.set('Content-Type', 'application/json')
 
@@ -27,6 +27,10 @@ const request = async <T>(
     ...options,
     headers
   })
+
+  if (response.status === 204) {
+    return null
+  }
 
   const text = await response.text()
   const json = tryParseJson<T>(text)
@@ -48,17 +52,10 @@ const request = async <T>(
   return {} as T
 }
 
-export const requestAuthCode = async (email: string) => {
-  await request('/auth/login', {
+export const loginAdmin = async (email: string, password: string) => {
+  return request<{ token: string }>('/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email })
-  })
-}
-
-export const verifyAuthCode = async (email: string, code: string) => {
-  return request<{ token: string }>('/auth/verify', {
-    method: 'POST',
-    body: JSON.stringify({ email, code })
+    body: JSON.stringify({ email, password })
   })
 }
 
@@ -68,11 +65,12 @@ export const getActiveSession = async () => {
   })
 }
 
-export const submitVote = async (sessionId: number, optionId: number, token: string) => {
-  return request('/votes', {
+export const submitVote = async (sessionId: number, optionId: number) => {
+  return request(`/polls/${sessionId}/vote`, {
     method: 'POST',
-    body: JSON.stringify({ sessionId, optionId })
-  }, token)
+    body: JSON.stringify({ optionId }),
+    credentials: 'include'
+  })
 }
 
 export const getLiveResults = async () => {

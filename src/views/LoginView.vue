@@ -6,14 +6,12 @@ import { useAuthStore } from '../stores/auth'
 const router = useRouter()
 const authStore = useAuthStore()
 const email = ref('')
-const code = ref('')
+const password = ref('')
 const errorMessage = ref<string | null>(null)
-const infoMessage = ref<string | null>(null)
-const step = ref<'request' | 'verify'>('request')
 
 const isAlatooEmail = computed(() => email.value.trim().toLowerCase().endsWith('@alatoo.edu.kg'))
 
-const handleRequestCode = async () => {
+const handleLogin = async () => {
   if (!email.value.trim()) {
     errorMessage.value = 'Please enter your email to continue.'
     return
@@ -22,32 +20,22 @@ const handleRequestCode = async () => {
     errorMessage.value = 'Use your @alatoo.edu.kg email address.'
     return
   }
-
-  errorMessage.value = null
-  infoMessage.value = null
-  try {
-    await authStore.requestCode(email.value.trim())
-    step.value = 'verify'
-    infoMessage.value = 'Verification code sent. Check your email.'
-  } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Failed to request code.'
-  }
-}
-
-const handleVerifyCode = async () => {
-  if (!code.value.trim()) {
-    errorMessage.value = 'Enter the 6-digit verification code.'
+  if (!password.value.trim()) {
+    errorMessage.value = 'Please enter your password.'
     return
   }
 
   errorMessage.value = null
-  infoMessage.value = null
   try {
-    await authStore.verifyCode(email.value.trim(), code.value.trim())
-    router.push('/vote')
+    await authStore.login(email.value.trim(), password.value.trim())
+    router.push('/admin')
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Verification failed.'
+    errorMessage.value = error instanceof Error ? error.message : 'Login failed.'
   }
+}
+
+const continueAsViewer = () => {
+  router.push('/vote')
 }
 </script>
 
@@ -55,7 +43,7 @@ const handleVerifyCode = async () => {
   <section class="page">
     <div class="card">
       <h1 class="title">TV Voting Console</h1>
-      <p class="subtitle">Enter your email to join the live session.</p>
+      <p class="subtitle">Admin access only. Viewers can continue without login.</p>
 
       <label class="field">
         <span>Email</span>
@@ -64,43 +52,25 @@ const handleVerifyCode = async () => {
           type="email"
           placeholder="user@alatoo.edu.kg"
           autocomplete="email"
-          :disabled="step === 'verify'"
         />
       </label>
 
-      <label v-if="step === 'verify'" class="field">
-        <span>Verification Code</span>
+      <label class="field">
+        <span>Password</span>
         <input
-          v-model="code"
-          type="text"
-          inputmode="numeric"
-          maxlength="6"
-          placeholder="123456"
+          v-model="password"
+          type="password"
+          placeholder="Enter password"
         />
       </label>
 
-      <button
-        v-if="step === 'request'"
-        class="primary-button"
-        type="button"
-        :disabled="authStore.isLoading"
-        @click="handleRequestCode"
-      >
-        {{ authStore.isLoading ? 'Sending…' : 'Send code' }}
+      <button class="primary-button" type="button" :disabled="authStore.isLoading" @click="handleLogin">
+        {{ authStore.isLoading ? 'Signing in…' : 'Admin Login' }}
       </button>
 
-      <button
-        v-else
-        class="primary-button"
-        type="button"
-        :disabled="authStore.isLoading"
-        @click="handleVerifyCode"
-      >
-        {{ authStore.isLoading ? 'Verifying…' : 'Verify & Login' }}
-      </button>
+      <button class="ghost-button" type="button" @click="continueAsViewer">Continue as viewer</button>
 
       <p v-if="errorMessage" class="helper-text error">{{ errorMessage }}</p>
-      <p v-else-if="infoMessage" class="helper-text">{{ infoMessage }}</p>
       <p v-else class="helper-text">Only @alatoo.edu.kg emails are allowed.</p>
     </div>
   </section>
@@ -170,6 +140,17 @@ const handleVerifyCode = async () => {
 .primary-button:not(:disabled):hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 20px rgba(63, 123, 255, 0.35);
+}
+
+.ghost-button {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid #2c3b52;
+  background: transparent;
+  color: #c6d2e6;
+  cursor: pointer;
 }
 
 .helper-text {

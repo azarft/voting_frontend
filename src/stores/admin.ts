@@ -35,7 +35,7 @@ export const useAdminStore = defineStore('admin', {
         if (!authStore.token) {
           throw new Error('You must be logged in as admin.')
         }
-        this.sessions = await getAllSessions(authStore.token)
+        this.sessions = (await getAllSessions(authStore.token)) ?? []
       } catch (error) {
         this.errorMessage = error instanceof Error ? error.message : 'Failed to load sessions.'
       } finally {

@@ -21,14 +21,12 @@ export const router = createRouter({
     {
       path: '/vote',
       name: 'vote',
-      component: VotingView,
-      meta: { requiresAuth: true }
+      component: VotingView
     },
     {
       path: '/results',
       name: 'results',
-      component: ResultsView,
-      meta: { requiresAuth: true }
+      component: ResultsView
     },
     {
       path: '/admin',
@@ -44,16 +42,12 @@ export const setupRouterGuards = (pinia: Pinia) => {
     const authStore = useAuthStore(pinia)
     const isAdminEmail = authStore.isAdmin
 
-    if (to.name === 'login' && authStore.isAuthenticated) {
-      return { path: '/vote' }
-    }
-
-    if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-      return { path: '/login' }
+    if (to.name === 'login' && isAdminEmail) {
+      return { path: '/admin' }
     }
 
     if (to.meta.requiresAdmin && !isAdminEmail) {
-      return { path: '/vote' }
+      return { path: '/login' }
     }
 
     if (to.name === 'vote' && isAdminEmail) {

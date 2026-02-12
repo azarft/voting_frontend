@@ -27,8 +27,8 @@ export const useResultsStore = defineStore('results', {
       this.errorMessage = null
       try {
         const session = await getActiveSession()
-        this.session = session
-        if (session.status && session.status !== 'ACTIVE') {
+        this.session = session ?? null
+        if (!session || (session.status && session.status !== 'ACTIVE')) {
           this.errorMessage = 'No active session. Showing last final results.'
         }
       } catch (error) {
@@ -44,6 +44,10 @@ export const useResultsStore = defineStore('results', {
         }
         if (this.session && this.session.status === 'ACTIVE') {
           const response = await getLiveResults()
+          if (!response) {
+            this.results = []
+            return
+          }
           const totalVotes = Object.values(response).reduce((sum, value) => sum + value, 0)
           const responseKeys = Object.keys(response)
           this.resultsTitle = this.session.title
@@ -61,6 +65,11 @@ export const useResultsStore = defineStore('results', {
           })
         } else {
           const response = await getLatestFinalResults()
+          if (!response) {
+            this.resultsTitle = 'Latest Final Results'
+            this.results = []
+            return
+          }
           const totalVotes = Object.values(response).reduce((sum, value) => sum + value, 0)
           this.resultsTitle = 'Latest Final Results'
           this.results = Object.entries(response).map(([label, votes], index) => ({

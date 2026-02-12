@@ -33,7 +33,11 @@ export const useVotingStore = defineStore('voting', {
       this.errorMessage = null
       try {
         const session = await getActiveSession()
-        this.session = session
+        this.session = session ?? null
+        if (!session) {
+          this.errorMessage = 'No active session right now.'
+          return
+        }
         if (session.status && session.status !== 'ACTIVE') {
           this.errorMessage = 'No active session right now.'
         }
@@ -56,13 +60,10 @@ export const useVotingStore = defineStore('voting', {
       this.errorMessage = null
       try {
         const authStore = useAuthStore()
-        if (!authStore.token) {
-          throw new Error('You must be logged in to vote.')
-        }
         if (authStore.isAdmin) {
           throw new Error('Admins cannot vote in sessions.')
         }
-        await submitVote(this.session.id, this.selectedOptionId, authStore.token)
+        await submitVote(this.session.id, this.selectedOptionId)
         this.hasVoted = true
         this.statusMessage = 'Vote submitted'
       } catch (error) {
